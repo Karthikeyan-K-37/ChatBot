@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+
+    <!-- Add Favicon (Pointing to the static folder now) -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='robo.png') }}">
+    
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212; /* Dark background */
+            color: #E0E0E0; /* Light text for contrast */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background-color: #1E1E1E;
+            width: 400px;
+            height: 500px;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        #chatbox {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #2A2A2A;
+            margin-bottom: 15px;
+            color: #E0E0E0;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #chatbox div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-msg {
+            text-align: right;
+            background-color: #2A7AE4; /* User message bubble color */
+            color: white;
+            border-radius: 20px;
+            padding: 10px;
+            margin: 5px 0;
+            max-width: 80%;
+            align-self: flex-end;
+            word-wrap: break-word;
+        }
+
+        .bot-msg {
+            text-align: left;
+            background-color: #333; /* Bot message bubble color */
+            color: white;
+            border-radius: 20px;
+            padding: 10px;
+            margin: 5px 0;
+            max-width: 80%;
+            align-self: flex-start;
+            word-wrap: break-word;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 50px);
+            padding: 12px;
+            background-color: #333;
+            border: 1px solid #444;
+            color: #E0E0E0;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #6200EE;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #3700B3;
+        }
+
+        .input-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Smooth Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #444;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: #121212;
+        }
+
+        /* Fade In Animation */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Chatbot</h1>
+
+        <!-- Chatbox to display conversation -->
+        <div id="chatbox"></div>
+
+        <!-- User input field -->
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Ask me anything..." autofocus>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userInput = document.getElementById('userInput').value;
+
+            if (userInput.trim() === "") return;  // Ignore empty input
+
+            // Append user's message to chatbox
+            let chatbox = document.getElementById('chatbox');
+            let userMessage = document.createElement("div");
+            userMessage.classList.add("user-msg", "fade-in");
+            userMessage.innerText = userInput; // No prefix ("You: ")
+            chatbox.appendChild(userMessage);
+
+            // Clear input field
+            document.getElementById('userInput').value = '';
+
+            // Scroll chatbox to bottom
+            chatbox.scrollTop = chatbox.scrollHeight;
+
+            // Make an AJAX call to Flask to get the response
+            fetch('/get_response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'user_input=' + encodeURIComponent(userInput)
+            })
+            .then(response => response.json())
+            .then(data => {
+                let chatbotResponse = data.response;
+
+                // Append chatbot's message to chatbox
+                let botMessage = document.createElement("div");
+                botMessage.classList.add("bot-msg", "fade-in");
+                botMessage.innerText = chatbotResponse; // No prefix ("Bot: ")
+                chatbox.appendChild(botMessage);
+
+                // Scroll chatbox to bottom
+                chatbox.scrollTop = chatbox.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error with the chat!');
+            });
+        }
+
+        // Enable the Enter key to send the message
+        document.getElementById('userInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent the default action (form submission)
+                sendMessage(); // Trigger send message function
+            }
+        });
+    </script>
+</body>
+</html>
