@@ -9,7 +9,8 @@ from typing_extensions import TypedDict
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import tools_condition
+from langchain.tools import Tool
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -44,11 +45,18 @@ def chatbot(state: State):
 
 graph_builder = StateGraph(State)
 
-def my_tool(input_data):
+# Define tools using langchain's Tool
+def my_tool(input_data: str) -> str:
     return f"Processed: {input_data}"
 
+tool = Tool(
+    name="My Tool",
+    func=my_tool,
+    description="Processes input data"
+)
+
 graph_builder.add_node("chatbot", chatbot)
-graph_builder.add_node("tools", ToolNode(tools=[my_tool]))
+graph_builder.add_node("tools", lambda state: {"messages": [{"role": "system", "content": tool.func(state['messages'][-1]['content'])}], "ask_human": False})
 
 def create_response(response: str, ai_message: AIMessage):
     return ToolMessage(
