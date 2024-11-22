@@ -45,7 +45,6 @@ def chatbot(state: State):
 
 graph_builder = StateGraph(State)
 
-# Define tools using langchain's Tool
 def my_tool(input_data: str) -> str:
     return f"Processed: {input_data}"
 
