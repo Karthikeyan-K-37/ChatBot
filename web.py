@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from Main import process_message, state
+from main import process_message, state
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
